@@ -1,4 +1,7 @@
-var emoji = require('emoji.json')
+const emojis = require('emoji.json')
+const fetch = require('node-fetch');
+var fs = require('file-system');
+
 //console.log(emoji[2])
 //console.log(emoji[2]["codes"])
 //console.log(emoji.length)
@@ -73,3 +76,30 @@ function getMessengerTestingURL(codepoints) { /* k(l) */
     var size = arguments.length <= 1 || arguments[1] === undefined ? defaultSize : arguments[1];
     return getURL(codepoints, size, types.TESTING);
 }
+
+function checkURLStatus(getFn, emoji) {
+    var url = getFn(emoji.codes.toLowerCase(), 128);
+    fetch(url)
+    .then(function(response) {
+          console.log(url + ": " + response.status + " " + emoji.char + " " + emoji.name);
+          var str = url + "," + response.status + "," + emoji.char + "," + emoji.name + "\n";
+          writeStream.write(str);
+          });
+}
+
+var writeStream = fs.createWriteStream('messenger-emojis-t.csv');
+
+var i = 0;
+const max_i = emojis.length;
+var timer = setInterval(function() {
+                       if(i < max_i){
+                        if(!emojis[i].codes.includes(" ")) {
+                        checkURLStatus(getMessengerTestingURL, emojis[i]);
+                        }
+                       } else {
+                        clearInterval(timer);
+                        writeStream.end();
+                      }
+                        i++;
+                }, 10);
+          
